@@ -18,6 +18,9 @@ from tkinter import filedialog, messagebox, ttk
 
 from converter import collect_inputs, convert_many
 
+APP_NAME = "Excel แปลงสมุดคุมเคาท์เตอร์"
+DEVELOPER = "พ.ต.ท. ดร.เกริกฤทธิ์ มณีจักร"
+
 
 def open_folder(path: Path) -> None:
     if sys.platform == "darwin":
@@ -31,7 +34,7 @@ def open_folder(path: Path) -> None:
 class App(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Excel Print Formatter (A4 landscape)")
+        self.title(APP_NAME)
         self.geometry("820x600")
         self.minsize(640, 480)
         self.files: list[Path] = []
@@ -44,6 +47,11 @@ class App(tk.Tk):
     # ---- layout -----------------------------------------------------------
     def _build(self) -> None:
         pad = {"padx": 10, "pady": 4}
+
+        header = ttk.Frame(self)
+        header.pack(fill="x", padx=10, pady=(10, 6))
+        ttk.Label(header, text=APP_NAME, font=("", 18, "bold"), anchor="center").pack(fill="x")
+        ttk.Label(header, text=f"By {DEVELOPER}", foreground="gray", anchor="center").pack(fill="x")
 
         buttons = ttk.Frame(self)
         buttons.pack(fill="x", **pad)

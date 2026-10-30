@@ -2,13 +2,21 @@ name: Build apps
 
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            zip: ExcelPrintFormatter-mac.zip
+          - os: windows-latest
+            zip: ExcelPrintFormatter-windows.zip
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +33,38 @@ jobs:
       - name: Build app
         run: pyinstaller --noconfirm --clean --windowed --onefile --name ExcelPrintFormatter app.py
 
-      - name: Upload build
-        uses: actions/upload-artifact@v4
+      - name: Zip Mac app
+        if: runner.os == 'macOS'
+        run: ditto -c -k --keepParent dist/ExcelPrintFormatter.app ${{ matrix.zip }}
+
+      - name: Zip Windows app
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/ExcelPrintFormatter.exe -DestinationPath ${{ matrix.zip }}
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: ExcelPrintFormatter-${{ matrix.os }}
-          path: dist/*
+          name: ${{ matrix.zip }}
+          path: ${{ matrix.zip }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Excel Print Formatter (build ${{ github.run_number }})
+          make_latest: true
+          body: |
+            Download the file for your computer:
+            - Mac: ExcelPrintFormatter-mac.zip
+            - Windows: ExcelPrintFormatter-windows.zip
+          files: |
+            ExcelPrintFormatter-mac.zip
+            ExcelPrintFormatter-windows.zip
